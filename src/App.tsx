@@ -260,239 +260,245 @@ export default function App() {
   }
 
   return (
-    <div style={{ maxWidth: 820, margin: "0 auto", padding: 20 }}>
-      <header style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-        <div>
-          <h1 style={{ margin: 0 }}>gombbin tracking</h1>
-          <p style={{ margin: "6px 0 0", color: "#555" }}>
-            곰삔에 대해 소소하게 한마디 남기기 🐻
-          </p>
-        </div>
+    <div style={{ maxWidth: 820, margin: "0 auto", minHeight: "calc(100vh - 4rem)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+      <div>
+        <header style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <h1 style={{ margin: 0 }}>gombbin tracking</h1>
+            <p style={{ margin: "6px 0 0", color: "#555" }}>
+              곰삔에 대해 소소하게 한마디 남기기 🐻
+            </p>
+          </div>
 
-        {!loading &&
-          (user ? (
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <span
-                style={{
-                  maxWidth: 240,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {displayName || meName}
-              </span>
-              <button type="button" onClick={signOut}>
-                Sign out
+          {!loading &&
+            (user ? (
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <span
+                  style={{
+                    maxWidth: 240,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {displayName || meName}
+                </span>
+                <button type="button" onClick={signOut}>
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <button type="button" onClick={signInWithGoogle}>
+                Sign in with Google
+              </button>
+            ))}
+        </header>
+
+        {user && (
+          <section
+            style={{
+              marginTop: 16,
+              padding: 12,
+              border: "1px solid #eee",
+              borderRadius: 12,
+            }}
+          >
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontWeight: 700 }}>내 닉네임</span>
+              <input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                style={{ padding: 8, minWidth: 220 }}
+                placeholder="내 닉네임"
+                maxLength={30}
+              />
+              <button type="button" onClick={saveDisplayName} disabled={savingName}>
+                {savingName ? "Saving..." : "Save"}
               </button>
             </div>
-          ) : (
-            <button type="button" onClick={signInWithGoogle}>
-              Sign in with Google
-            </button>
-          ))}
-      </header>
-
-      {user && (
-        <section
-          style={{
-            marginTop: 16,
-            padding: 12,
-            border: "1px solid #eee",
-            borderRadius: 12,
-          }}
-        >
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ fontWeight: 700 }}>내 닉네임</span>
-            <input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              style={{ padding: 8, minWidth: 220 }}
-              placeholder="내 닉네임"
-              maxLength={30}
-            />
-            <button type="button" onClick={saveDisplayName} disabled={savingName}>
-              {savingName ? "Saving..." : "Save"}
-            </button>
-          </div>
-          <div style={{ marginTop: 6, fontSize: 12, color: "#666" }}>
-            닉네임은 새 댓글부터 적용돼. (저장 후 자동 반영)
-          </div>
-        </section>
-      )}
-
-      <section style={{ marginTop: 16 }}>
-        {!user ? (
-          <p>코멘트 작성은 Google 로그인 후 가능해. (익명 불가)</p>
-        ) : (
-          <form onSubmit={submitComment} style={{ display: "flex", gap: 8 }}>
-            <input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="곰삔에 대해 한마디..."
-              style={{ flex: 1, padding: 10 }}
-            />
-            <button disabled={submitting}>{submitting ? "Submitting..." : "Submit"}</button>
-          </form>
+            <div style={{ marginTop: 6, fontSize: 12, color: "#666" }}>
+              닉네임은 새 댓글부터 적용돼. (저장 후 자동 반영)
+            </div>
+          </section>
         )}
-      </section>
 
-      <section style={{ marginTop: 18 }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-          <h2 style={{ margin: 0, fontSize: 18 }}>
-            Comments{" "}
-            <span style={{ color: "#888", fontSize: 13 }}>
-              ({selectedUserId ? "filtered" : "all"})
-            </span>
-          </h2>
-
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => fetchComments(page)}>
-              Refresh
-            </button>
-
-            {selectedUserId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedUserId(null);
-                  setPage(1);
-                }}
-              >
-                Clear filter
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Pagination controls */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            flexWrap: "wrap",
-            marginTop: 10,
-          }}
-        >
-          <button
-            type="button"
-            disabled={!canPrev}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            Prev
-          </button>
-
-          {pageNumbers[0] !== 1 && (
-            <>
-              <button
-                type="button"
-                onClick={() => setPage(1)}
-                style={{
-                  fontWeight: page === 1 ? 800 : 400,
-                  textDecoration: page === 1 ? "underline" : "none",
-                }}
-              >
-                1
-              </button>
-              <span>…</span>
-            </>
+        <section style={{ marginTop: 16 }}>
+          {!user ? (
+            <p>코멘트 작성은 Google 로그인 후 가능해. (익명 불가)</p>
+          ) : (
+            <form onSubmit={submitComment} style={{ display: "flex", gap: 8 }}>
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="곰삔에 대해 한마디..."
+                style={{ flex: 1, padding: 10 }}
+              />
+              <button disabled={submitting}>{submitting ? "Submitting..." : "Submit"}</button>
+            </form>
           )}
+        </section>
 
-          {pageNumbers.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPage(p)}
-              style={{
-                fontWeight: page === p ? 800 : 400,
-                textDecoration: page === p ? "underline" : "none",
-              }}
-            >
-              {p}
-            </button>
-          ))}
+        <section style={{ marginTop: 18 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+            <h2 style={{ margin: 0, fontSize: 18 }}>
+              Comments{" "}
+              <span style={{ color: "#888", fontSize: 13 }}>
+                ({selectedUserId ? "filtered" : "all"})
+              </span>
+            </h2>
 
-          {pageNumbers[pageNumbers.length - 1] !== totalPages && (
-            <>
-              <span>…</span>
-              <button
-                type="button"
-                onClick={() => setPage(totalPages)}
-                style={{
-                  fontWeight: page === totalPages ? 800 : 400,
-                  textDecoration: page === totalPages ? "underline" : "none",
-                }}
-              >
-                {totalPages}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button type="button" onClick={() => fetchComments(page)}>
+                Refresh
               </button>
-            </>
-          )}
 
-          <button
-            type="button"
-            disabled={!canNext}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          >
-            Next
-          </button>
-
-          <span style={{ color: "#666", marginLeft: 6 }}>
-            Page {page} / {totalPages} · Total {totalCount}
-          </span>
-        </div>
-
-        <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
-          {comments.map((c) => (
-            <div
-              key={c.id}
-              style={{
-                border: "1px solid #ddd",
-                padding: 12,
-                borderRadius: 12,
-              }}
-            >
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <strong
-                  style={{ cursor: "pointer" }}
+              {selectedUserId && (
+                <button
+                  type="button"
                   onClick={() => {
-                    setSelectedUserId(c.user_id);
+                    setSelectedUserId(null);
                     setPage(1);
                   }}
-                  title="이 작성자만 보기"
                 >
-                  {c.user_name || "Unknown"}
-                </strong>
-
-                <span style={{ color: "#666", fontSize: 12 }}>
-                  {formatDateTime(c.created_at)}
-                </span>
-
-                <span style={{ marginLeft: "auto", fontSize: 18 }}>{c.emoji ?? "💬"}</span>
-
-                {userId === c.user_id && (
-                  <button
-                    type="button"
-                    onClick={() => deleteComment(c.id)}
-                    style={{ marginLeft: 6 }}
-                    title="내 코멘트 삭제"
-                  >
-                    Delete
-                  </button>
-                )}
-              </div>
-
-              <p style={{ margin: "10px 0 0", whiteSpace: "pre-wrap" }}>{c.text}</p>
+                  Clear filter
+                </button>
+              )}
             </div>
-          ))}
+          </div>
 
-          {comments.length === 0 && (
-            <p style={{ color: "#666" }}>
-              아직 코멘트가 없어. 첫 한마디 남겨줘 🙂 (페이지 {page})
-            </p>
-          )}
-        </div>
-      </section>
+          {/* Pagination controls */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+              marginTop: 10,
+            }}
+          >
+            <button
+              type="button"
+              disabled={!canPrev}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Prev
+            </button>
+
+            {pageNumbers[0] !== 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPage(1)}
+                  style={{
+                    fontWeight: page === 1 ? 800 : 400,
+                    textDecoration: page === 1 ? "underline" : "none",
+                  }}
+                >
+                  1
+                </button>
+                <span>…</span>
+              </>
+            )}
+
+            {pageNumbers.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPage(p)}
+                style={{
+                  fontWeight: page === p ? 800 : 400,
+                  textDecoration: page === p ? "underline" : "none",
+                }}
+              >
+                {p}
+              </button>
+            ))}
+
+            {pageNumbers[pageNumbers.length - 1] !== totalPages && (
+              <>
+                <span>…</span>
+                <button
+                  type="button"
+                  onClick={() => setPage(totalPages)}
+                  style={{
+                    fontWeight: page === totalPages ? 800 : 400,
+                    textDecoration: page === totalPages ? "underline" : "none",
+                  }}
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
+
+            <button
+              type="button"
+              disabled={!canNext}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </button>
+
+            <span style={{ color: "#666", marginLeft: 6 }}>
+              Page {page} / {totalPages} · Total {totalCount}
+            </span>
+          </div>
+
+          <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
+            {comments.map((c) => (
+              <div
+                key={c.id}
+                style={{
+                  border: "1px solid #ddd",
+                  padding: 12,
+                  borderRadius: 12,
+                }}
+              >
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <strong
+                    style={{ cursor: "pointer" }}
+                    onClick={() => {
+                      setSelectedUserId(c.user_id);
+                      setPage(1);
+                    }}
+                    title="이 작성자만 보기"
+                  >
+                    {c.user_name || "Unknown"}
+                  </strong>
+
+                  <span style={{ color: "#666", fontSize: 12 }}>
+                    {formatDateTime(c.created_at)}
+                  </span>
+
+                  <span style={{ marginLeft: "auto", fontSize: 18 }}>{c.emoji ?? "💬"}</span>
+
+                  {userId === c.user_id && (
+                    <button
+                      type="button"
+                      onClick={() => deleteComment(c.id)}
+                      style={{ marginLeft: 6 }}
+                      title="내 코멘트 삭제"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+
+                <p style={{ margin: "10px 0 0", whiteSpace: "pre-wrap" }}>{c.text}</p>
+              </div>
+            ))}
+
+            {comments.length === 0 && (
+              <p style={{ color: "#666" }}>
+                아직 코멘트가 없어. 첫 한마디 남겨줘 🙂 (페이지 {page})
+              </p>
+            )}
+          </div>
+        </section>
+      </div>
+      <footer style={{ marginTop: 20, color: "#666", fontSize: 12, textAlign: "center" }}>
+        <p>사이트 탄생 비화: 다른 일 하려는데 두시간 안에 웹사이트를 antigravity 를 배워서 만들어 보라고 곰삔이 굉장히 열심히 종용 함.
+          어느 정도냐면 성공하면 커피를 사주겠다고...</p>
+      </footer>
     </div>
   );
 }
