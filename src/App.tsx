@@ -1,11 +1,12 @@
+import { Routes, Route, Outlet } from "react-router-dom";
 import "./App.css";
 import { useAuth } from "./hooks/useAuth";
 import { useProfile } from "./hooks/useProfile";
-import { useComments } from "./hooks/useComments";
 import MainLayout from "./components/layout/MainLayout";
-import DisplayNameEditor from "./features/profile/DisplayNameEditor";
-import CommentForm from "./features/comments/CommentForm";
-import CommentList from "./features/comments/CommentList";
+import Tabs from "./components/layout/Tabs";
+import TracksPage from "./pages/TracksPage";
+import WikiPage from "./pages/WikiPage";
+import ProfilePage from "./pages/ProfilePage";
 
 export default function App() {
   const {
@@ -19,48 +20,21 @@ export default function App() {
     signOut,
   } = useAuth();
 
-  const { displayName, setDisplayName, saveDisplayName, savingName } = useProfile(
+  const { displayName, saveDisplayName, savingName } = useProfile(
     userId,
     meName
   );
 
-  const {
-    comments,
-    totalCount,
-    selectedUserId,
-    setSelectedUserId,
-    page,
-    setPage,
-    text,
-    setText,
-    submitting,
-    totalPages,
-    canPrev,
-    canNext,
-    pageNumbers,
-    fetchComments,
-    submitComment: submitCommentAction,
-    deleteComment,
-  } = useComments(userId);
-
   const handleSignOut = async () => {
     await signOut();
-    setSelectedUserId(null);
-    setPage(1);
   };
 
-  const handleSaveDisplayName = async () => {
-    const success = await saveDisplayName();
-    if (success) {
-      setPage(1);
-      await fetchComments(1);
-    }
-  };
-
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await submitCommentAction(displayName, meName, meAvatar, session?.access_token);
-  };
+  const TabsLayout = () => (
+    <>
+      <Tabs />
+      <Outlet />
+    </>
+  );
 
   return (
     <MainLayout
@@ -73,37 +47,35 @@ export default function App() {
         onSignIn: signInWithGoogle,
       }}
     >
-      <DisplayNameEditor
-        user={user}
-        displayName={displayName}
-        setDisplayName={setDisplayName}
-        saveDisplayName={handleSaveDisplayName}
-        savingName={savingName}
-      />
-
-      <CommentForm
-        user={user}
-        text={text}
-        setText={setText}
-        submitComment={handleSubmitComment}
-        submitting={submitting}
-      />
-
-      <CommentList
-        selectedUserId={selectedUserId}
-        fetchComments={fetchComments}
-        setSelectedUserId={setSelectedUserId}
-        setPage={setPage}
-        page={page}
-        comments={comments}
-        userId={userId}
-        deleteComment={deleteComment}
-        totalPages={totalPages}
-        totalCount={totalCount}
-        pageNumbers={pageNumbers}
-        canPrev={canPrev}
-        canNext={canNext}
-      />
+      <Routes>
+        <Route element={<TabsLayout />}>
+          <Route
+            path="/"
+            element={
+              <TracksPage
+                user={user}
+                userId={userId}
+                meName={meName}
+                meAvatar={meAvatar}
+                sessionToken={session?.access_token}
+                displayName={displayName}
+              />
+            }
+          />
+          <Route path="/wiki" element={<WikiPage />} />
+          <Route
+            path="/profile"
+            element={
+              <ProfilePage
+                user={user}
+                displayName={displayName}
+                saveDisplayName={saveDisplayName}
+                savingName={savingName}
+              />
+            }
+          />
+        </Route>
+      </Routes>
     </MainLayout>
   );
 }

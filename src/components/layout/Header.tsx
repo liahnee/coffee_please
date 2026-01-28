@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import AuthButtons from "../../features/auth/AuthButtons";
 
 type HeaderProps = {
@@ -17,12 +18,25 @@ export default function Header({
     onSignOut,
     onSignIn,
 }: HeaderProps) {
+    const location = useLocation();
+
+    // Default text for home/tracks
+    let description = "곰삔에 대해 소소하게 한마디 남기기 🐻";
+
+    if (location.pathname === "/wiki") {
+        description = "곰삔에 대해서 소소하게 알아가 보기 🐻";
+    } else if (location.pathname === "/profile") {
+        description = "프로필 수정";
+    }
+
     return (
         <header style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
             <div>
-                <h1 style={{ margin: 0 }}>gombbin tracking</h1>
-                <p style={{ margin: "6px 0 0", color: "#555" }}>
-                    곰삔에 대해 소소하게 한마디 남기기 🐻
+                <a href="/" style={{ textDecoration: "none", color: "inherit" }}>
+                    <h1 style={{ margin: 0 }}>gombbin tracking</h1>
+                </a>
+                <p id="page-description" style={{ margin: "6px 0 0", color: "#555" }}>
+                    {description}
                 </p>
             </div>
 

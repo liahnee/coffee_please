@@ -30,10 +30,10 @@ export function useProfile(userId: string | null, meName: string) {
         })();
     }, [userId, meName]);
 
-    async function saveDisplayName() {
+    async function saveDisplayName(newName: string) {
         if (!userId) return;
 
-        const dn = displayName.trim().slice(0, 30);
+        const dn = newName.trim().slice(0, 30);
         if (!dn) {
             alert("닉네임을 입력해줘!");
             return;
@@ -53,6 +53,9 @@ export function useProfile(userId: string | null, meName: string) {
             alert(error.message);
             return;
         }
+
+        // Update global state only after successful save
+        setDisplayName(dn);
 
         return true; // Success signal
     }
