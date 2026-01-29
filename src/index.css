@@ -7,6 +7,8 @@
 
   /* Default to Light Mode variables */
   --bg-color: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --bg-tertiary: #f0f0f0;
   --text-color: #213547;
   --border-color: #ddd;
   --button-bg: #f9f9f9;
@@ -27,6 +29,8 @@
 .dark {
   color-scheme: dark;
   --bg-color: #242424;
+  --bg-secondary: #2f2f2f;
+  --bg-tertiary: #3a3a3a;
   --text-color: rgba(255, 255, 255, 0.87);
   --border-color: #444;
   --button-bg: #1a1a1a;

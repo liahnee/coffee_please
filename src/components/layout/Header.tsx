@@ -6,6 +6,7 @@ type HeaderProps = {
     user: any;
     displayName: string;
     meName: string;
+    isAdmin: boolean;
     onSignOut: () => void;
     onSignIn: () => void;
 };
@@ -15,6 +16,7 @@ export default function Header({
     user,
     displayName,
     meName,
+    isAdmin,
     onSignOut,
     onSignIn,
 }: HeaderProps) {
@@ -30,12 +32,23 @@ export default function Header({
     }
 
     return (
-        <header style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+        <header
+            style={{
+                padding: "10px 20px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                backgroundColor: "var(--bg-color)",
+                borderBottom: "1px solid var(--border-color)",
+                height: "80px",
+                boxSizing: "border-box",
+            }}
+        >
             <div>
                 <a href="/" style={{ textDecoration: "none", color: "inherit" }}>
-                    <h1 style={{ margin: 0 }}>gombbin tracking</h1>
+                    <h1 style={{ margin: 0, fontSize: "1.5rem" }}>gombbin tracking</h1>
                 </a>
-                <p id="page-description" style={{ margin: "6px 0 0", color: "#555" }}>
+                <p id="page-description" style={{ margin: "4px 0 0", color: "#888", fontSize: "0.9rem" }}>
                     {description}
                 </p>
             </div>
@@ -45,6 +58,7 @@ export default function Header({
                 user={user}
                 displayName={displayName}
                 meName={meName}
+                isAdmin={isAdmin}
                 onSignOut={onSignOut}
                 onSignIn={onSignIn}
             />

@@ -6,6 +6,7 @@ type AuthButtonsProps = {
     user: any; // Using any for simplicity as it comes from Supabase session user
     displayName: string;
     meName: string;
+    isAdmin: boolean;
     onSignOut: () => void;
     onSignIn: () => void;
 };
@@ -15,6 +16,7 @@ export default function AuthButtons({
     user,
     displayName,
     meName,
+    isAdmin,
     onSignOut,
     onSignIn,
 }: AuthButtonsProps) {
@@ -91,6 +93,29 @@ export default function AuthButtons({
                         >
                             Profile
                         </button>
+                        {isAdmin && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    window.location.href = "/admin/wiki-requests";
+                                }}
+                                style={{
+                                    display: "block",
+                                    width: "100%",
+                                    textAlign: "left",
+                                    padding: "8px 12px",
+                                    background: "none",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    fontSize: 14,
+                                    color: "var(--text-color)",
+                                    borderTop: "1px solid var(--border-color)",
+                                }}
+                            >
+                                Admin
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={toggleTheme}

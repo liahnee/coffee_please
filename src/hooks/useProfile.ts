@@ -3,30 +3,35 @@ import { supabase } from "../supabaseClient";
 
 export function useProfile(userId: string | null, meName: string) {
     const [displayName, setDisplayName] = useState<string>("");
+    const [isAdmin, setIsAdmin] = useState(false);
     const [savingName, setSavingName] = useState(false);
 
-    // Load nickname from profiles when logged in
+    // Load profile from profiles when logged in
     useEffect(() => {
         if (!userId) {
             setDisplayName("");
+            setIsAdmin(false);
             return;
         }
 
         (async () => {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("display_name")
+                .select("display_name, is_admin")
                 .eq("user_id", userId)
                 .maybeSingle();
 
             if (error) {
                 console.error(error);
                 setDisplayName(meName);
+                setIsAdmin(false);
                 return;
             }
 
             if (data?.display_name) setDisplayName(data.display_name);
             else setDisplayName(meName);
+
+            setIsAdmin(data?.is_admin || false);
         })();
     }, [userId, meName]);
 
@@ -60,5 +65,5 @@ export function useProfile(userId: string | null, meName: string) {
         return true; // Success signal
     }
 
-    return { displayName, setDisplayName, saveDisplayName, savingName };
+    return { displayName, setDisplayName, saveDisplayName, savingName, isAdmin };
 }
