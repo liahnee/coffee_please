@@ -1,18 +1,24 @@
+import { useState, useEffect } from "react";
+
 type DisplayNameEditorProps = {
     user: any;
     displayName: string;
-    setDisplayName: (name: string) => void;
-    saveDisplayName: () => void;
+    saveDisplayName: (name: string) => void;
     savingName: boolean;
 };
 
 export default function DisplayNameEditor({
     user,
     displayName,
-    setDisplayName,
     saveDisplayName,
     savingName,
 }: DisplayNameEditorProps) {
+    const [inputValue, setInputValue] = useState(displayName);
+
+    useEffect(() => {
+        setInputValue(displayName);
+    }, [displayName]);
+
     if (!user) return null;
 
     return (
@@ -27,13 +33,18 @@ export default function DisplayNameEditor({
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 700 }}>내 닉네임</span>
                 <input
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    style={{ padding: 8, minWidth: 220 }}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && !savingName) {
+                            saveDisplayName(inputValue);
+                        }
+                    }}
+                    style={{ padding: 8, minWidth: 220, color: "#000", backgroundColor: "#fff" }}
                     placeholder="내 닉네임"
                     maxLength={30}
                 />
-                <button type="button" onClick={saveDisplayName} disabled={savingName}>
+                <button type="button" onClick={() => saveDisplayName(inputValue)} disabled={savingName}>
                     {savingName ? "Saving..." : "Save"}
                 </button>
             </div>

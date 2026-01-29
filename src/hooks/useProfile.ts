@@ -3,37 +3,42 @@ import { supabase } from "../supabaseClient";
 
 export function useProfile(userId: string | null, meName: string) {
     const [displayName, setDisplayName] = useState<string>("");
+    const [isAdmin, setIsAdmin] = useState(false);
     const [savingName, setSavingName] = useState(false);
 
-    // Load nickname from profiles when logged in
+    // Load profile from profiles when logged in
     useEffect(() => {
         if (!userId) {
             setDisplayName("");
+            setIsAdmin(false);
             return;
         }
 
         (async () => {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("display_name")
+                .select("display_name, is_admin")
                 .eq("user_id", userId)
                 .maybeSingle();
 
             if (error) {
                 console.error(error);
                 setDisplayName(meName);
+                setIsAdmin(false);
                 return;
             }
 
             if (data?.display_name) setDisplayName(data.display_name);
             else setDisplayName(meName);
+
+            setIsAdmin(data?.is_admin || false);
         })();
     }, [userId, meName]);
 
-    async function saveDisplayName() {
+    async function saveDisplayName(newName: string) {
         if (!userId) return;
 
-        const dn = displayName.trim().slice(0, 30);
+        const dn = newName.trim().slice(0, 30);
         if (!dn) {
             alert("닉네임을 입력해줘!");
             return;
@@ -54,8 +59,11 @@ export function useProfile(userId: string | null, meName: string) {
             return;
         }
 
+        // Update global state only after successful save
+        setDisplayName(dn);
+
         return true; // Success signal
     }
 
-    return { displayName, setDisplayName, saveDisplayName, savingName };
+    return { displayName, setDisplayName, saveDisplayName, savingName, isAdmin };
 }
