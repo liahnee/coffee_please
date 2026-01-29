@@ -16,8 +16,8 @@ export default function WikiPage() {
     const [sections, setSections] = useState<WikiSection[]>([]);
     const [tocTree, setTocTree] = useState<TocNode[]>([]);
     const [loadingTOC, setLoadingTOC] = useState(true);
-    const [content, setContent] = useState<WikiLatestVersion | null>(null);
     const [loadingContent, setLoadingContent] = useState(false);
+    const [allContentVersions, setAllContentVersions] = useState<Map<string, WikiLatestVersion>>(new Map());
     const [error, setError] = useState<string | null>(null);
 
     const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -56,8 +56,7 @@ export default function WikiPage() {
         if (loadingTOC || sections.length === 0) return;
 
         if (!slug) {
-            const first = sections[0];
-            setSearchParams({ slug: first.slug }, { replace: true });
+            setSearchParams({ slug: "_all" }, { replace: true });
             return;
         }
 
@@ -65,8 +64,7 @@ export default function WikiPage() {
 
         const valid = sections.find(s => s.slug === slug);
         if (!valid) {
-            const first = sections[0];
-            setSearchParams({ slug: first.slug }, { replace: true });
+            setSearchParams({ slug: "_all" }, { replace: true });
         }
     }, [slug, loadingTOC, sections, setSearchParams]);
 
@@ -76,92 +74,59 @@ export default function WikiPage() {
 
         (async () => {
             setLoadingContent(true);
-            setContent(null);
 
-            if (slug === "_all") {
-                // Aggregate ALL sections in order
-                const { data: allVersions, error } = await supabase
-                    .from("wiki_latest_versions")
-                    .select("section_id, content, created_at");
+            const targetSections = sections;
 
-                if (error) {
-                    console.error("Error fetching all content:", error);
-                    setError("본문 전체를 불러오는데 실패했습니다.");
-                } else {
-                    const versionMap = new Map(allVersions.map(v => [v.section_id, v.content]));
-                    // Aggregate based on 'sections' (which is already ordered hierarchical flat list)
-                    const fullMarkdown = sections.map(s => {
-                        const content = versionMap.get(s.id) || "*(No content)*";
-                        const headerPrefix = "#".repeat(Math.min(s.depth + 1, 6));
-                        return `${headerPrefix} ${s.title}\n\n${content}\n\n---\n`;
-                    }).join("\n");
+            // Fetch ALL versions for the target sections
+            const { data: allVersions, error } = await supabase
+                .from("wiki_latest_versions")
+                .select("section_id, content, created_at, created_by, source_request_id")
+                .in("section_id", targetSections.map(s => s.id));
 
-                    setContent({
-                        section_id: "all",
-                        content: fullMarkdown,
-                        created_at: new Date().toISOString(),
-                        created_by: "system",
-                        source_request_id: null
-                    });
-                }
+            if (error) {
+                console.error("Error fetching content:", error);
+                setError("본문을 불러오는데 실패했습니다.");
             } else {
-                const section = sections.find((s) => s.slug === slug);
-                if (!section) {
-                    setLoadingContent(false);
-                    return;
-                }
-
-                const { data, error } = await supabase
-                    .from("wiki_latest_versions")
-                    .select("section_id, content, created_at, created_by, source_request_id")
-                    .eq("section_id", section.id)
-                    .maybeSingle();
-
-                if (error) {
-                    console.error("Error fetching content:", error);
-                    setError("본문을 불러오는데 실패했습니다.");
-                } else {
-                    setContent(data as WikiLatestVersion | null);
-                }
+                const versionMap = new Map<string, WikiLatestVersion>(
+                    (allVersions as any[] || []).map(v => [v.section_id, v as WikiLatestVersion])
+                );
+                setAllContentVersions(versionMap);
             }
             setLoadingContent(false);
         })();
-    }, [slug, sections]);
+    }, [slug, sections, tocTree]);
 
-    const activeSection = sections.find((s) => s.slug === slug);
+
+    // 4. Initial Scroll
+    useEffect(() => {
+        if (!loadingContent && slug && slug !== "_all" && allContentVersions.size > 0) {
+            const targetId = `section-${slug}`;
+            const el = document.getElementById(targetId);
+            if (el) {
+                // Short timeout to ensure DOM is fully ready
+                setTimeout(() => {
+                    el.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+            }
+        }
+    }, [loadingContent, slug, allContentVersions.size]);
 
     const handleSelectSection = (newSlug: string) => {
-        setSearchParams({ slug: newSlug });
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        const targetId = `section-${newSlug}`;
+        const el = document.getElementById(targetId);
+
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth" });
+            setSearchParams({ slug: newSlug }, { replace: true });
+        } else {
+            setSearchParams({ slug: newSlug });
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
     };
 
     const handleViewAll = () => {
         setSearchParams({ slug: "_all" });
         window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
-    // Handlers for Modal
-    const handleAddSection = (parentId: string | null) => {
-        if (!user) {
-            alert("Please login to propose changes.");
-            return;
-        }
-        setModalMode("add");
-        setAddParentSectionId(parentId);
-        setEditTargetSectionId(undefined);
-        setIsModalOpen(true);
-    };
-
-    const handleEditSection = () => {
-        if (!user) {
-            alert("Please login to propose changes.");
-            return;
-        }
-        if (!activeSection) return;
-        setModalMode("edit");
-        setEditTargetSectionId(activeSection.id);
-        setAddParentSectionId(null);
-        setIsModalOpen(true);
     };
 
     const handleEditSpecificSection = (section: WikiSection) => {
@@ -175,15 +140,25 @@ export default function WikiPage() {
         setIsModalOpen(true);
     };
 
-    const handleDeleteSection = () => {
+    const handleDeleteSpecificSection = (section: WikiSection) => {
         if (!user) {
             alert("Please login to propose changes.");
             return;
         }
-        if (!activeSection) return;
         setModalMode("delete");
-        setEditTargetSectionId(activeSection.id);
+        setEditTargetSectionId(section.id);
         setAddParentSectionId(null);
+        setIsModalOpen(true);
+    };
+
+    const handleAddSection = (parentId: string | null) => {
+        if (!user) {
+            alert("Please login to propose changes.");
+            return;
+        }
+        setModalMode("add");
+        setAddParentSectionId(parentId);
+        setEditTargetSectionId(undefined);
         setIsModalOpen(true);
     };
 
@@ -194,6 +169,8 @@ export default function WikiPage() {
     if (error && sections.length === 0) {
         return <div style={{ padding: 40, color: "red", textAlign: "center" }}>{error}</div>;
     }
+
+    const renderSections = sections;
 
     return (
         <div style={{ display: "flex", minHeight: "100%", position: "relative" }}>
@@ -207,14 +184,14 @@ export default function WikiPage() {
             </div>
 
             <style>{`
-         @media (max-width: 768px) {
-           .toc-desktop { display: none !important; }
-           .mobile-only { display: block !important; }
-         }
-         @media (min-width: 769px) {
-           .mobile-only { display: none !important; }
-         }
-       `}</style>
+          @media (max-width: 768px) {
+            .toc-desktop { display: none !important; }
+            .mobile-only { display: block !important; }
+          }
+          @media (min-width: 769px) {
+            .mobile-only { display: none !important; }
+          }
+        `}</style>
 
             <WikiTOC
                 nodes={tocTree}
@@ -227,19 +204,29 @@ export default function WikiPage() {
                 onCloseDrawer={() => setMobileDrawerOpen(false)}
             />
 
-            <main style={{ flex: 1, minWidth: 0, paddingBottom: 60 }}>
-                {loadingContent ? (
+            <main style={{ flex: 1, minWidth: 0, paddingBottom: 60, padding: "0 24px" }}>
+                {loadingContent && renderSections.length === 0 ? (
                     <div style={{ padding: 40, textAlign: "center", fontStyle: "italic", color: "#888" }}>
                         본문 로딩 중...
                     </div>
                 ) : (
-                    <WikiContent
-                        title={slug === "_all" ? "Full Wiki Content" : (activeSection?.title || "Wiki")}
-                        markdown={content?.content || null}
-                        updatedAt={content?.created_at || null}
-                        onEdit={slug === "_all" ? undefined : handleEditSection}
-                        onDelete={slug === "_all" ? undefined : handleDeleteSection}
-                    />
+                    <div className="wiki-content-list">
+                        {renderSections.map((s) => {
+                            const version = allContentVersions.get(s.id);
+                            return (
+                                <WikiContent
+                                    key={s.id}
+                                    sectionSlug={s.slug}
+                                    title={s.title}
+                                    markdown={version?.content || null}
+                                    updatedAt={version?.created_at || null}
+                                    depth={s.depth}
+                                    onEdit={() => handleEditSpecificSection(s)}
+                                    onDelete={() => handleDeleteSpecificSection(s)}
+                                />
+                            );
+                        })}
+                    </div>
                 )}
             </main>
 
@@ -249,11 +236,12 @@ export default function WikiPage() {
                     sectionId={editTargetSectionId || undefined}
                     parentSectionId={addParentSectionId}
                     sections={sections}
-                    currentSection={modalMode === 'edit' ? sections.find(s => s.id === editTargetSectionId) : activeSection}
+                    currentSection={editTargetSectionId ? sections.find(s => s.id === editTargetSectionId) : undefined}
                     onClose={() => setIsModalOpen(false)}
                     onSubmitted={() => {
-                        // Maybe refresh?
+                        // Refresh manually or via state? For now alert
                         alert("Your request has been submitted for review.");
+                        setIsModalOpen(false);
                     }}
                     user={user}
                 />
