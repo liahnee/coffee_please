@@ -20,6 +20,7 @@ export default function WikiContent({ title, markdown, updatedAt, onEdit, onDele
             className="wiki-content-section"
             style={{
                 padding: "24px 0",
+                paddingLeft: depth * 24, // Indent based on depth
                 borderBottom: "1px solid var(--border-color)",
                 scrollMarginTop: 20
             }}
@@ -30,8 +31,10 @@ export default function WikiContent({ title, markdown, updatedAt, onEdit, onDele
                         margin: 0,
                         fontSize: isRoot ? 28 : (24 - depth * 2),
                         color: "var(--text-color)",
-                        fontWeight: isRoot ? 800 : 700
+                        fontWeight: isRoot ? 800 : 700,
+                        opacity: isRoot ? 1 : 0.9
                     }}>
+                        {!isRoot && <span style={{ marginRight: 8, opacity: 0.5, fontWeight: 400 }}>{"—".repeat(depth)}</span>}
                         {title}
                     </h2>
 
