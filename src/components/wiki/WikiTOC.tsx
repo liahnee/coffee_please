@@ -170,7 +170,9 @@ export default function WikiTOC({
                     borderRight: "1px solid var(--border-color)",
                     backgroundColor: "var(--bg-secondary)",
                     overflowY: "auto",
-                    height: "100%"
+                    position: "sticky",
+                    top: 0,
+                    height: "100vh"
                 }}
                 className="toc-desktop"
             >

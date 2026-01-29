@@ -6,57 +6,78 @@ type WikiContentProps = {
     updatedAt: string | null;
     onEdit?: () => void;
     onDelete?: () => void;
+    sectionSlug?: string;
+    depth?: number;
 };
 
-export default function WikiContent({ title, markdown, updatedAt, onEdit, onDelete }: WikiContentProps) {
+export default function WikiContent({ title, markdown, updatedAt, onEdit, onDelete, sectionSlug, depth = 0 }: WikiContentProps) {
+    const isRoot = depth === 0;
+    const headerId = sectionSlug ? `section-${sectionSlug}` : undefined;
+
     return (
-        <div className="wiki-content" style={{ padding: "16px 24px", flex: 1 }}>
-            <header style={{ marginBottom: 24, borderBottom: "1px solid var(--border-color)", paddingBottom: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-                    <h1 style={{ margin: "0 0 8px 0", fontSize: 28 }}>{title}</h1>
-                    <div style={{ display: "flex", gap: 8 }}>
+        <div
+            id={headerId}
+            className="wiki-content-section"
+            style={{
+                padding: "24px 0",
+                borderBottom: "1px solid var(--border-color)",
+                scrollMarginTop: 20
+            }}
+        >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+                    <h2 style={{
+                        margin: 0,
+                        fontSize: isRoot ? 28 : (24 - depth * 2),
+                        color: "var(--text-color)",
+                        fontWeight: isRoot ? 800 : 700
+                    }}>
+                        {title}
+                    </h2>
+
+                    {/* Section Action Icons */}
+                    <div style={{ display: "flex", gap: 12, marginLeft: 20, opacity: 0.4 }}>
                         {onEdit && (
                             <button
                                 onClick={onEdit}
+                                title="Edit section"
                                 style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 6,
-                                    padding: "6px 12px",
-                                    fontSize: 13,
-                                    fontWeight: 500,
-                                    background: "none", border: "1px solid var(--border-color)", borderRadius: 4, cursor: "pointer", color: "var(--text-color)"
+                                    background: "none",
+                                    border: "none",
+                                    fontSize: "12px",
+                                    padding: "2px",
+                                    cursor: "pointer",
+                                    filter: "grayscale(1)"
                                 }}
                             >
-                                <span style={{ fontSize: 14 }}>✏️</span> Edit
+                                ✏️
                             </button>
                         )}
                         {onDelete && (
                             <button
                                 onClick={onDelete}
+                                title="Delete section"
                                 style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 6,
-                                    padding: "6px 12px",
-                                    fontSize: 13,
-                                    fontWeight: 500,
-                                    color: "#c53030",
-                                    borderColor: "#feb2b2",
-                                    background: "none", border: "1px solid", borderRadius: 4, cursor: "pointer"
+                                    background: "none",
+                                    border: "none",
+                                    fontSize: "12px",
+                                    padding: "2px",
+                                    cursor: "pointer",
+                                    filter: "grayscale(1)"
                                 }}
                             >
-                                <span style={{ fontSize: 14 }}>🗑️</span> Delete
+                                🗑️
                             </button>
                         )}
                     </div>
                 </div>
-                {updatedAt && (
-                    <div style={{ fontSize: 13, color: "#888" }}>
-                        마지막 업데이트: {new Date(updatedAt).toLocaleString()}
-                    </div>
+
+                {updatedAt && isRoot && (
+                    <span style={{ fontSize: 11, color: "#888", opacity: 0.7 }}>
+                        Updated: {new Date(updatedAt).toLocaleDateString()}
+                    </span>
                 )}
-            </header>
+            </div>
 
             {markdown ? (
                 <div style={{ lineHeight: 1.6 }}>
