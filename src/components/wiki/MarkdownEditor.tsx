@@ -185,7 +185,7 @@ export default function MarkdownEditor({ value, onChange, sections }: MarkdownEd
                                 // Replace tokens with resolved links for preview
                                 let previewText = value;
                                 const tokenRegex = /\[\[section:([a-f0-9-]+)\]\]/g;
-                                previewText = previewText.replace(tokenRegex, (match, uuid) => {
+                                previewText = previewText.replace(tokenRegex, (_, uuid) => {
                                     const found = sections.find(s => s.id === uuid);
                                     return found ? `[${found.title}](/wiki?slug=${found.slug})` : `[Unknown Link]`;
                                 });
